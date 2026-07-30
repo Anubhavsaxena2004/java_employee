@@ -44,6 +44,8 @@ public class Complaint {
     @NotNull(message = "Student is required")
     private Student student;
 
+    private String adminRemark;
+
     @PrePersist
     protected void onCreate() {
         if (this.createdAt == null) {
