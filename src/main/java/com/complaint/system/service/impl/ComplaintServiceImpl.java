@@ -30,8 +30,13 @@ public class ComplaintServiceImpl implements ComplaintService {
 
     @Override
     public ComplaintResponseDTO createComplaint(ComplaintRequestDTO requestDTO) {
+        // Auto-create student if studentId does not exist yet to prevent unhandled 500 errors
         Student student = studentRepository.findByStudentId(requestDTO.getStudentId())
-                .orElseThrow(() -> new IllegalArgumentException("Student not found with studentId: " + requestDTO.getStudentId()));
+                .orElseGet(() -> studentRepository.save(Student.builder()
+                        .studentId(requestDTO.getStudentId())
+                        .name("Student " + requestDTO.getStudentId())
+                        .email(requestDTO.getStudentId().toLowerCase().replaceAll("\\s+", "") + "@university.edu")
+                        .build()));
 
         Complaint complaint = Complaint.builder()
                 .title(requestDTO.getTitle())
@@ -58,7 +63,7 @@ public class ComplaintServiceImpl implements ComplaintService {
     @Transactional(readOnly = true)
     public List<ComplaintResponseDTO> getComplaintsByStudent(String studentId) {
         Student student = studentRepository.findByStudentId(studentId)
-                .orElseThrow(() -> new IllegalArgumentException("Student not found with studentId: " + studentId));
+                .orElseThrow(() -> new IllegalArgumentException("No complaints found for Student ID: " + studentId));
 
         return complaintRepository.findByStudentId(student.getId()).stream()
                 .map(this::mapToResponseDTO)
